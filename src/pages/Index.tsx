@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useSiteData } from '@/hooks/useSiteData';
 
 const Index = () => {
   const { toast } = useToast();
+  const { data, loading } = useSiteData('all');
   const [activeTab, setActiveTab] = useState('home');
   const [appointmentForm, setAppointmentForm] = useState({
     name: '',
@@ -42,6 +44,23 @@ const Index = () => {
     setTripForm({ city: '', name: '', phone: '', comment: '' });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const specialist = data.specialist;
+  const services = data.services || [];
+  const testimonials = data.testimonials || [];
+  const trips = data.trips || [];
+  const articles = data.articles || [];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
@@ -51,28 +70,32 @@ const Index = () => {
               <Icon name="Brain" size={28} className="text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Нейродефектолог</h1>
-              <p className="text-sm text-gray-600">Помощь особенным детям</p>
+              <h1 className="text-xl font-bold text-gray-900">{specialist?.full_name || 'Нейродефектолог'}</h1>
+              <p className="text-sm text-gray-600">{specialist?.title || 'Помощь особенным детям'}</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://t.me/yourchannel" target="_blank" rel="noopener noreferrer">
-                <Icon name="Send" size={20} />
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
-                <Icon name="Instagram" size={20} />
-              </a>
-            </Button>
+            {specialist?.telegram && (
+              <Button variant="ghost" size="icon" asChild>
+                <a href={specialist.telegram} target="_blank" rel="noopener noreferrer">
+                  <Icon name="Send" size={20} />
+                </a>
+              </Button>
+            )}
+            {specialist?.instagram && (
+              <Button variant="ghost" size="icon" asChild>
+                <a href={specialist.instagram} target="_blank" rel="noopener noreferrer">
+                  <Icon name="Instagram" size={20} />
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 mb-8 h-auto">
             <TabsTrigger value="home" className="data-[state=active]:bg-primary data-[state=active]:text-white py-3">
               <Icon name="Home" size={18} className="mr-2" />
               Главная
@@ -84,6 +107,10 @@ const Index = () => {
             <TabsTrigger value="about" className="data-[state=active]:bg-primary data-[state=active]:text-white py-3">
               <Icon name="User" size={18} className="mr-2" />
               О специалисте
+            </TabsTrigger>
+            <TabsTrigger value="articles" className="data-[state=active]:bg-primary data-[state=active]:text-white py-3">
+              <Icon name="BookOpen" size={18} className="mr-2" />
+              Статьи
             </TabsTrigger>
             <TabsTrigger value="reviews" className="data-[state=active]:bg-primary data-[state=active]:text-white py-3">
               <Icon name="Star" size={18} className="mr-2" />
@@ -107,28 +134,29 @@ const Index = () => {
                   <div className="animate-fade-in px-6">
                     <Badge className="mb-4 bg-secondary">Профессиональная помощь</Badge>
                     <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                      Нейродефектолог для вашего ребёнка
+                      {specialist?.title || 'Нейродефектолог для вашего ребёнка'}
                     </h2>
                     <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                      Индивидуальный подход к развитию и коррекции особенностей детей. 
-                      Современные методики, подтверждённые сертификаты, многолетний опыт работы.
+                      {specialist?.bio || 'Индивидуальный подход к развитию и коррекции особенностей детей. Современные методики, подтверждённые сертификаты, многолетний опыт работы.'}
                     </p>
                     <div className="flex flex-wrap gap-4">
                       <Button size="lg" className="bg-primary hover:bg-primary/90" onClick={() => setActiveTab('contact')}>
                         Записаться на приём
                       </Button>
-                      <Button size="lg" variant="outline" asChild>
-                        <a href="https://wa.me/79999999999" target="_blank" rel="noopener noreferrer">
-                          <Icon name="MessageCircle" size={20} className="mr-2" />
-                          WhatsApp
-                        </a>
-                      </Button>
+                      {specialist?.whatsapp && (
+                        <Button size="lg" variant="outline" asChild>
+                          <a href={`https://wa.me/${specialist.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                            <Icon name="MessageCircle" size={20} className="mr-2" />
+                            WhatsApp
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div className="animate-scale-in px-6">
                     <img 
-                      src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"
-                      alt="Нейродефектолог" 
+                      src={specialist?.photo_url || "https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"}
+                      alt={specialist?.full_name || "Нейродефектолог"} 
                       className="rounded-2xl shadow-2xl w-full h-[500px] object-cover"
                     />
                   </div>
@@ -172,28 +200,14 @@ const Index = () => {
                     <AccordionItem value="item-3" className="border rounded-lg px-6 bg-white shadow-sm">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-3">
-                          <Icon name="Heart" className="text-primary" />
-                          <span className="font-semibold">Как проходят занятия?</span>
+                          <Icon name="Lightbulb" className="text-primary" />
+                          <span className="font-semibold">Как проходит работа?</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="text-gray-700 pt-4">
-                        Занятия проводятся индивидуально в игровой форме. Используются специальные пособия, 
-                        сенсорное оборудование, нейропсихологические игры. Каждое занятие адаптируется под 
-                        текущее состояние и настроение ребёнка. Родители получают рекомендации для домашних занятий.
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="item-4" className="border rounded-lg px-6 bg-white shadow-sm">
-                      <AccordionTrigger className="hover:no-underline">
-                        <div className="flex items-center gap-3">
-                          <Icon name="Clock" className="text-primary" />
-                          <span className="font-semibold">Сколько нужно занятий?</span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="text-gray-700 pt-4">
-                        Длительность коррекционного курса индивидуальна. В среднем для заметной динамики требуется 
-                        от 3 до 6 месяцев регулярных занятий (2-3 раза в неделю). После диагностики составляется 
-                        индивидуальный план с примерными сроками.
+                        Работа начинается с диагностики состояния ребёнка. На основе результатов разрабатывается 
+                        индивидуальная программа занятий. Занятия проводятся в игровой форме с учётом возрастных 
+                        особенностей и интересов ребёнка.
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
@@ -203,705 +217,635 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="services" className="animate-fade-in">
-            <div className="max-w-6xl mx-auto">
+            <section className="py-8">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Услуги и цены</h2>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Мои услуги</h2>
                 <p className="text-gray-600 max-w-2xl mx-auto">
-                  Комплексный подход к развитию ребёнка с учётом индивидуальных особенностей
+                  Профессиональная помощь детям с особенностями развития
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
-                <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50">
-                  <CardHeader>
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                      <Icon name="ClipboardList" size={24} className="text-primary" />
-                    </div>
-                    <CardTitle>Первичная консультация</CardTitle>
-                    <CardDescription>Знакомство, сбор анамнеза, первичная оценка</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-primary mb-2">2 500 ₽</div>
-                    <p className="text-sm text-gray-600">Длительность: 60 минут</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50">
-                  <CardHeader>
-                    <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
-                      <Icon name="FileSearch" size={24} className="text-secondary" />
-                    </div>
-                    <CardTitle>Комплексная диагностика</CardTitle>
-                    <CardDescription>Полное нейропсихологическое обследование</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-secondary mb-2">5 000 ₽</div>
-                    <p className="text-sm text-gray-600">Длительность: 90-120 минут</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50">
-                  <CardHeader>
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                      <Icon name="Users" size={24} className="text-primary" />
-                    </div>
-                    <CardTitle>Коррекционное занятие</CardTitle>
-                    <CardDescription>Индивидуальные развивающие занятия</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-primary mb-2">3 000 ₽</div>
-                    <p className="text-sm text-gray-600">Длительность: 45-60 минут</p>
-                  </CardContent>
-                </Card>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.map((service) => (
+                  <Card key={service.id} className="hover:shadow-lg transition-shadow border-t-4 border-t-primary">
+                    <CardHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Icon name={service.icon as any} size={24} className="text-primary" />
+                        </div>
+                        <Badge variant="secondary">{service.category}</Badge>
+                      </div>
+                      <CardTitle className="text-xl">{service.title}</CardTitle>
+                      <CardDescription>{service.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="text-2xl font-bold text-primary">{service.price} ₽</div>
+                        <div className="text-sm text-gray-600 flex items-center gap-1">
+                          <Icon name="Clock" size={16} />
+                          {service.duration}
+                        </div>
+                      </div>
+                      <Button className="w-full" onClick={() => setActiveTab('contact')}>
+                        Записаться
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
-              <div className="mt-12">
-                <Card className="max-w-3xl mx-auto bg-gradient-to-r from-primary/5 to-secondary/5">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                        <Icon name="Sparkles" size={20} className="text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-semibold text-lg mb-2">Пакетные предложения</h3>
-                        <p className="text-gray-700">
-                          При оплате курса из 10 занятий — скидка 10%. 
-                          Абонемент на месяц (8 занятий) — 22 000 ₽.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+              <Card className="mt-12 bg-gradient-to-r from-primary/5 to-secondary/5 border-none">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="Info" className="text-primary" />
+                    Важная информация
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-gray-700">
+                  <p className="flex items-start gap-2">
+                    <Icon name="CheckCircle" size={20} className="text-primary mt-1 flex-shrink-0" />
+                    <span>Первичная консультация включает диагностику и составление индивидуального плана</span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <Icon name="CheckCircle" size={20} className="text-primary mt-1 flex-shrink-0" />
+                    <span>Все занятия проводятся в комфортной обстановке с использованием специализированных материалов</span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <Icon name="CheckCircle" size={20} className="text-primary mt-1 flex-shrink-0" />
+                    <span>Возможен выезд специалиста на дом в пределах города</span>
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
           </TabsContent>
 
           <TabsContent value="about" className="animate-fade-in">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-                О специалисте
-              </h2>
-              
-              <Card className="mb-8">
-                <CardContent className="pt-6">
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div>
-                      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <Icon name="GraduationCap" className="text-primary" />
-                        Образование
-                      </h3>
-                      <ul className="space-y-3 text-gray-700">
-                        <li className="flex items-start gap-2">
-                          <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                          <span>Высшее дефектологическое образование</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                          <span>Специализация: нейропсихология детского возраста</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                          <span>Повышение квалификации по коррекции РАС</span>
-                        </li>
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <Icon name="Award" className="text-primary" />
-                        Опыт работы
-                      </h3>
-                      <ul className="space-y-3 text-gray-700">
-                        <li className="flex items-start gap-2">
-                          <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                          <span>Более 7 лет практической работы</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                          <span>Более 200 детей с положительной динамикой</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                          <span>Работа с ЗПР, ЗПРР, РАС, ДЦП, синдромом Дауна</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Icon name="Award" className="text-primary" />
-                    Галерея сертификатов
-                  </CardTitle>
-                  <CardDescription>
-                    Все документы об образовании и сертификаты повышения квалификации
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-3 gap-4 mb-6">
-                    <div className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary transition-all">
-                      <img 
-                        src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/18abb996-46dc-467a-9306-53832b2cad83.jpg"
-                        alt="Сертификат 1" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Icon name="ZoomIn" size={32} className="text-white" />
-                      </div>
-                    </div>
-                    
-                    <div className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary transition-all">
-                      <img 
-                        src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/18abb996-46dc-467a-9306-53832b2cad83.jpg"
-                        alt="Сертификат 2" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Icon name="ZoomIn" size={32} className="text-white" />
-                      </div>
-                    </div>
-                    
-                    <div className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-primary transition-all">
-                      <img 
-                        src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/18abb996-46dc-467a-9306-53832b2cad83.jpg"
-                        alt="Сертификат 3" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Icon name="ZoomIn" size={32} className="text-white" />
-                      </div>
-                    </div>
-                  </div>
+            <section className="py-8">
+              <div className="grid md:grid-cols-2 gap-12 items-start">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-6">О специалисте</h2>
+                  <img 
+                    src={specialist?.photo_url || "https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"}
+                    alt={specialist?.full_name || "Специалист"} 
+                    className="rounded-2xl shadow-xl w-full object-cover mb-6"
+                  />
                   
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">Диплом педагога-дефектолога</Badge>
-                    <Badge variant="secondary">Сертификат нейропсихолога</Badge>
-                    <Badge variant="secondary">Курсы по АВА-терапии</Badge>
+                  <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-none">
+                    <CardContent className="pt-6">
+                      <h3 className="font-bold text-xl mb-4 flex items-center gap-2">
+                        <Icon name="Award" className="text-primary" />
+                        Квалификация
+                      </h3>
+                      <ul className="space-y-3 text-gray-700">
+                        {specialist?.specializations && specialist.specializations.length > 0 ? (
+                          specialist.specializations.map((spec, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <Icon name="CheckCircle" size={20} className="text-primary mt-0.5 flex-shrink-0" />
+                              <span>{spec}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <>
+                            <li className="flex items-start gap-2">
+                              <Icon name="CheckCircle" size={20} className="text-primary mt-0.5 flex-shrink-0" />
+                              <span>Высшее дефектологическое образование</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Icon name="CheckCircle" size={20} className="text-primary mt-0.5 flex-shrink-0" />
+                              <span>Сертификаты по нейропсихологии</span>
+                            </li>
+                          </>
+                        )}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div>
+                  <div className="grid grid-cols-1 gap-6 mb-8">
+                    <Card className="border-l-4 border-l-primary">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Icon name="Briefcase" size={24} className="text-primary" />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-bold text-primary">{specialist?.experience_years || 10}+</div>
+                            <div className="text-sm text-gray-600">лет опыта</div>
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-secondary">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                            <Icon name="Users" size={24} className="text-secondary" />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-bold text-secondary">{specialist?.clients_count || 500}+</div>
+                            <div className="text-sm text-gray-600">довольных клиентов</div>
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-primary">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Icon name="TrendingUp" size={24} className="text-primary" />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-bold text-primary">{specialist?.success_rate || 95}%</div>
+                            <div className="text-sm text-gray-600">успешных случаев</div>
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="reviews" className="animate-fade-in">
-            <div className="max-w-6xl mx-auto space-y-12">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-                  Достижения и результаты
-                </h2>
-                
-                <div className="grid md:grid-cols-3 gap-6 mb-12">
-                  <Card className="text-center border-2 border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Icon name="Users" size={32} className="text-primary" />
-                      </div>
-                      <div className="text-4xl font-bold text-primary mb-2">200+</div>
-                      <p className="text-gray-600">Счастливых семей</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="text-center border-2 border-secondary/20">
-                    <CardContent className="pt-6">
-                      <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
-                        <Icon name="Calendar" size={32} className="text-secondary" />
-                      </div>
-                      <div className="text-4xl font-bold text-secondary mb-2">7+</div>
-                      <p className="text-gray-600">Лет опыта</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="text-center border-2 border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Icon name="Award" size={32} className="text-primary" />
-                      </div>
-                      <div className="text-4xl font-bold text-primary mb-2">95%</div>
-                      <p className="text-gray-600">Положительная динамика</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
-                  <CardContent className="pt-6">
-                    <div className="grid md:grid-cols-2 gap-8 items-center">
-                      <div>
-                        <h3 className="text-2xl font-bold mb-4">Мой подход к работе</h3>
-                        <p className="text-gray-700 mb-4">
-                          За годы практики я помогла более 200 семьям найти путь к развитию и адаптации их детей. 
-                          Каждый ребёнок уникален, и я разрабатываю индивидуальную программу коррекции, 
-                          основанную на современных нейропсихологических методиках.
-                        </p>
-                        <ul className="space-y-2 text-gray-700">
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                            <span>Комплексная диагностика перед началом работы</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                            <span>Регулярная оценка прогресса и корректировка программы</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" size={20} className="text-secondary mt-1 flex-shrink-0" />
-                            <span>Обучение родителей методам домашней работы</span>
-                          </li>
-                        </ul>
-                      </div>
-                      <div>
-                        <img 
-                          src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"
-                          alt="Работа с детьми" 
-                          className="rounded-lg shadow-lg w-full h-64 object-cover"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-                  Отзывы родителей
-                </h2>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <img 
-                          src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/de2690a1-2ffb-410f-ae2b-3a161af64098.jpg"
-                          alt="Анна М." 
-                          className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                        />
-                        <div>
-                          <h4 className="font-semibold text-lg">Анна М.</h4>
-                          <div className="flex gap-1">
-                            {[1,2,3,4,5].map(i => (
-                              <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 italic mb-3">
-                        "Обратились с проблемой задержки речевого развития у сына (3 года). 
-                        После 4 месяцев занятий результаты превзошли все ожидания! Ребёнок начал говорить фразами, 
-                        улучшилось внимание. Огромная благодарность за профессионализм и терпение!"
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Icon name="Heart" className="text-primary" />
+                        Подход к работе
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-gray-700">
+                      <p>
+                        В своей работе я использую комплексный подход, сочетающий современные методики 
+                        нейропсихологии и классической дефектологии.
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Icon name="MapPin" size={14} />
-                        <span>Москва</span>
-                      </div>
+                      <p>
+                        Каждый ребёнок уникален, поэтому программа занятий разрабатывается индивидуально 
+                        с учётом особенностей развития, возраста и интересов ребёнка.
+                      </p>
+                      <p>
+                        Я верю, что терпение, профессионализм и любовь к своему делу помогают добиваться 
+                        отличных результатов в работе с особенными детьми.
+                      </p>
                     </CardContent>
                   </Card>
 
-                  <Card className="hover:shadow-lg transition-all">
+                  <Card className="mt-6 bg-primary text-white">
                     <CardContent className="pt-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <img 
-                          src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/de2690a1-2ffb-410f-ae2b-3a161af64098.jpg"
-                          alt="Елена К." 
-                          className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                        />
-                        <div>
-                          <h4 className="font-semibold text-lg">Елена К.</h4>
-                          <div className="flex gap-1">
-                            {[1,2,3,4,5].map(i => (
-                              <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 italic mb-3">
-                        "Работаем уже полгода с диагнозом РАС. Дочка стала более контактной, 
-                        появился зрительный контакт, снизилась тревожность. Специалист находит подход к ребёнку, 
-                        всегда даёт подробные рекомендации для работы дома."
+                      <h3 className="font-bold text-xl mb-4 flex items-center gap-2">
+                        <Icon name="Target" />
+                        Миссия
+                      </h3>
+                      <p className="text-white/90">
+                        Помочь каждому ребёнку раскрыть свой потенциал и адаптироваться в обществе, 
+                        используя современные методы коррекции и индивидуальный подход.
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Icon name="MapPin" size={14} />
-                        <span>Санкт-Петербург</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <img 
-                          src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/de2690a1-2ffb-410f-ae2b-3a161af64098.jpg"
-                          alt="Мария С." 
-                          className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                        />
-                        <div>
-                          <h4 className="font-semibold text-lg">Мария С.</h4>
-                          <div className="flex gap-1">
-                            {[1,2,3,4,5].map(i => (
-                              <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 italic mb-3">
-                        "Сыну 5 лет, диагноз ЗПРР. Занимаемся 8 месяцев. Динамика потрясающая: 
-                        улучшилась координация, речь стала более развёрнутой, появился интерес к обучению. 
-                        Рекомендую всем, кто ищет грамотного специалиста!"
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Icon name="MapPin" size={14} />
-                        <span>Казань</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="hover:shadow-lg transition-all">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <img 
-                          src="https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/de2690a1-2ffb-410f-ae2b-3a161af64098.jpg"
-                          alt="Ольга Д." 
-                          className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                        />
-                        <div>
-                          <h4 className="font-semibold text-lg">Ольга Д.</h4>
-                          <div className="flex gap-1">
-                            {[1,2,3,4,5].map(i => (
-                              <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 italic mb-3">
-                        "Очень благодарны за помощь! Дочка с синдромом Дауна стала более самостоятельной, 
-                        улучшилась мелкая моторика и внимание. Занятия проходят в комфортной обстановке, 
-                        ребёнок всегда идёт с удовольствием."
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Icon name="MapPin" size={14} />
-                        <span>Екатеринбург</span>
-                      </div>
                     </CardContent>
                   </Card>
                 </div>
               </div>
-            </div>
+            </section>
           </TabsContent>
 
-          <TabsContent value="trips" className="animate-fade-in">
-            <div className="max-w-4xl mx-auto">
+          <TabsContent value="articles" className="animate-fade-in">
+            <section className="py-8">
               <div className="text-center mb-12">
-                <Badge className="mb-4 bg-secondary">Выездные консультации</Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Командировки</h2>
-                <p className="text-gray-600">
-                  Возможность получить помощь специалиста в вашем городе
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Полезные статьи</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Практические советы и информация о методиках работы
                 </p>
               </div>
 
-              <Card className="mb-8 border-2 border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Icon name="MapPin" className="text-primary" />
-                    Условия выезда
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Icon name="Users" size={16} className="text-secondary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Минимум 8 заявок</h4>
-                      <p className="text-gray-600 text-sm">
-                        При наборе 8 и более заявок из одного города организую выезд на 3 недели
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Icon name="Calendar" size={16} className="text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Интенсивный курс</h4>
-                      <p className="text-gray-600 text-sm">
-                        За 3 недели проводятся диагностика и серия коррекционных занятий с каждым ребёнком
-                      </p>
-                    </div>
-                  </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {articles.map((article) => (
+                  <Card key={article.id} className="hover:shadow-lg transition-all cursor-pointer">
+                    <CardHeader>
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary">{article.category}</Badge>
+                        <span className="text-xs text-gray-500">
+                          {new Date(article.publish_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <CardTitle className="line-clamp-2 text-lg">{article.title}</CardTitle>
+                      <CardDescription className="line-clamp-3">
+                        {article.excerpt}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {article.tags.slice(0, 3).map((tag, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <Button variant="ghost" className="w-full group">
+                        Читать далее
+                        <Icon name="ArrowRight" size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Icon name="MessageSquare" size={16} className="text-secondary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Обратная связь</h4>
-                      <p className="text-gray-600 text-sm">
-                        Родители получают подробные рекомендации и план дальнейших действий
+              {articles.length === 0 && (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <Icon name="BookOpen" size={48} className="mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-600">Статьи скоро появятся</p>
+                  </CardContent>
+                </Card>
+              )}
+            </section>
+          </TabsContent>
+
+          <TabsContent value="reviews" className="animate-fade-in">
+            <section className="py-8">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Отзывы родителей</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Истории семей, которым мы помогли
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {testimonials.map((testimonial) => (
+                  <Card key={testimonial.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          {testimonial.photo_url && (
+                            <img 
+                              src={testimonial.photo_url} 
+                              alt={testimonial.client_name}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          )}
+                          <div>
+                            <CardTitle className="text-lg">{testimonial.client_name}</CardTitle>
+                            <CardDescription className="flex items-center gap-1">
+                              <Icon name="MapPin" size={14} />
+                              {testimonial.city}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <Icon 
+                              key={i}
+                              name="Star" 
+                              size={16} 
+                              className={i < testimonial.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"} 
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 mb-4">{testimonial.text}</p>
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <Icon name="Calendar" size={14} />
+                        {new Date(testimonial.date).toLocaleDateString('ru-RU')}
                       </p>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card className="mt-12 bg-gradient-to-r from-primary/5 to-secondary/5 border-none">
+                <CardHeader className="text-center">
+                  <CardTitle>Хотите поделиться своим опытом?</CardTitle>
+                  <CardDescription>
+                    Мы будем рады узнать о ваших успехах и поделиться ими с другими семьями
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                  <Button size="lg" onClick={() => setActiveTab('contact')}>
+                    Оставить отзыв
+                  </Button>
                 </CardContent>
               </Card>
+            </section>
+          </TabsContent>
 
-              <Card>
+          <TabsContent value="trips" className="animate-fade-in">
+            <section className="py-8">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Командировки в города</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Я готова приехать в ваш город для проведения консультаций и занятий. 
+                  Оставьте заявку, и мы сообщим, когда планируется поездка в ваш регион.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {trips.map((trip) => (
+                  <Card key={trip.id} className={`border-t-4 ${trip.status === 'planned' ? 'border-t-primary' : trip.status === 'confirmed' ? 'border-t-green-500' : 'border-t-gray-300'}`}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-2">
+                        <CardTitle className="text-xl flex items-center gap-2">
+                          <Icon name="MapPin" className="text-primary" />
+                          {trip.city}
+                        </CardTitle>
+                        <Badge 
+                          variant={trip.status === 'confirmed' ? 'default' : 'secondary'}
+                          className={trip.status === 'confirmed' ? 'bg-green-500' : ''}
+                        >
+                          {trip.status === 'confirmed' ? 'Подтверждено' : trip.status === 'planned' ? 'Планируется' : 'Сбор заявок'}
+                        </Badge>
+                      </div>
+                      {trip.trip_dates && (
+                        <CardDescription className="flex items-center gap-1">
+                          <Icon name="Calendar" size={14} />
+                          {trip.trip_dates}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Заявок собрано:</span>
+                          <span className="font-bold text-primary">
+                            {trip.current_applications} / {trip.required_for_trip}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full transition-all"
+                            style={{ width: `${Math.min((trip.current_applications / trip.required_for_trip) * 100, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <Button 
+                        className="w-full" 
+                        variant={trip.status === 'confirmed' ? 'default' : 'outline'}
+                        onClick={() => setActiveTab('contact')}
+                      >
+                        {trip.status === 'confirmed' ? 'Записаться' : 'Оставить заявку'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card className="bg-white">
                 <CardHeader>
-                  <CardTitle>Оставить заявку на командировку</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="Send" className="text-primary" />
+                    Заявка на командировку
+                  </CardTitle>
                   <CardDescription>
-                    Укажите ваш город и контакты. Мы свяжемся с вами при наборе группы.
+                    Укажите ваш город и контактные данные. Мы свяжемся с вами, когда будем планировать поездку.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleTripSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Ваш город *</label>
-                      <Input
-                        placeholder="Например: Казань"
+                      <label className="block text-sm font-medium mb-2">Ваш город</label>
+                      <Input 
+                        placeholder="Например, Москва"
                         value={tripForm.city}
-                        onChange={(e) => setTripForm({...tripForm, city: e.target.value})}
+                        onChange={(e) => setTripForm({ ...tripForm, city: e.target.value })}
                         required
                       />
                     </div>
-                    
                     <div>
-                      <label className="block text-sm font-medium mb-2">Ваше имя *</label>
-                      <Input
-                        placeholder="Как к вам обращаться?"
+                      <label className="block text-sm font-medium mb-2">Ваше имя</label>
+                      <Input 
+                        placeholder="Как к вам обращаться"
                         value={tripForm.name}
-                        onChange={(e) => setTripForm({...tripForm, name: e.target.value})}
+                        onChange={(e) => setTripForm({ ...tripForm, name: e.target.value })}
                         required
                       />
                     </div>
-                    
                     <div>
-                      <label className="block text-sm font-medium mb-2">Телефон *</label>
-                      <Input
+                      <label className="block text-sm font-medium mb-2">Телефон</label>
+                      <Input 
                         type="tel"
                         placeholder="+7 (999) 123-45-67"
                         value={tripForm.phone}
-                        onChange={(e) => setTripForm({...tripForm, phone: e.target.value})}
+                        onChange={(e) => setTripForm({ ...tripForm, phone: e.target.value })}
                         required
                       />
                     </div>
-                    
                     <div>
-                      <label className="block text-sm font-medium mb-2">Комментарий</label>
-                      <Textarea
-                        placeholder="Дополнительная информация (возраст ребёнка, особенности и т.д.)"
+                      <label className="block text-sm font-medium mb-2">Комментарий (необязательно)</label>
+                      <Textarea 
+                        placeholder="Дополнительная информация или пожелания"
                         value={tripForm.comment}
-                        onChange={(e) => setTripForm({...tripForm, comment: e.target.value})}
+                        onChange={(e) => setTripForm({ ...tripForm, comment: e.target.value })}
                         rows={3}
                       />
                     </div>
-                    
-                    <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90">
-                      <Icon name="Send" size={18} className="mr-2" />
+                    <Button type="submit" className="w-full" size="lg">
                       Отправить заявку
                     </Button>
                   </form>
                 </CardContent>
               </Card>
-            </div>
+            </section>
           </TabsContent>
 
           <TabsContent value="contact" className="animate-fade-in">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12 text-center">
-                Контакты и запись
-              </h2>
-
+            <section className="py-8">
               <div className="grid md:grid-cols-2 gap-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Свяжитесь со мной</CardTitle>
-                    <CardDescription>Выберите удобный способ связи</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Icon name="Phone" size={20} className="text-primary" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Телефон</div>
-                        <a href="tel:+79999999999" className="font-semibold hover:text-primary">
-                          +7 (999) 999-99-99
-                        </a>
-                      </div>
-                    </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-6">Свяжитесь со мной</h2>
+                  
+                  <div className="space-y-6 mb-8">
+                    {specialist?.phone && (
+                      <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
+                        <CardContent className="flex items-center gap-4 pt-6">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="Phone" size={24} className="text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-semibold">Телефон</div>
+                            <a href={`tel:${specialist.phone}`} className="text-primary hover:underline">
+                              {specialist.phone}
+                            </a>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
-                        <Icon name="Mail" size={20} className="text-secondary" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Email</div>
-                        <a href="mailto:specialist@example.com" className="font-semibold hover:text-primary">
-                          specialist@example.com
-                        </a>
-                      </div>
-                    </div>
+                    {specialist?.whatsapp && (
+                      <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
+                        <CardContent className="flex items-center gap-4 pt-6">
+                          <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="MessageCircle" size={24} className="text-green-500" />
+                          </div>
+                          <div>
+                            <div className="font-semibold">WhatsApp</div>
+                            <a 
+                              href={`https://wa.me/${specialist.whatsapp.replace(/\D/g, '')}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-green-500 hover:underline"
+                            >
+                              {specialist.whatsapp}
+                            </a>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                    <div className="pt-4 space-y-3">
-                      <Button className="w-full bg-[#25D366] hover:bg-[#128C7E]" asChild>
-                        <a href="https://wa.me/79999999999" target="_blank" rel="noopener noreferrer">
-                          <Icon name="MessageCircle" size={18} className="mr-2" />
-                          Написать в WhatsApp
-                        </a>
-                      </Button>
+                    {specialist?.telegram && (
+                      <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+                        <CardContent className="flex items-center gap-4 pt-6">
+                          <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="Send" size={24} className="text-blue-500" />
+                          </div>
+                          <div>
+                            <div className="font-semibold">Telegram</div>
+                            <a 
+                              href={specialist.telegram} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:underline"
+                            >
+                              Написать в Telegram
+                            </a>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                      <Button variant="outline" className="w-full" asChild>
-                        <a href="https://t.me/username" target="_blank" rel="noopener noreferrer">
-                          <Icon name="Send" size={18} className="mr-2" />
-                          Написать в Telegram
-                        </a>
-                      </Button>
-                    </div>
+                    {specialist?.instagram && (
+                      <Card className="border-l-4 border-l-pink-500 hover:shadow-md transition-shadow">
+                        <CardContent className="flex items-center gap-4 pt-6">
+                          <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="Instagram" size={24} className="text-pink-500" />
+                          </div>
+                          <div>
+                            <div className="font-semibold">Instagram</div>
+                            <a 
+                              href={specialist.instagram} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-pink-500 hover:underline"
+                            >
+                              Подписаться
+                            </a>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
 
-                    <div className="pt-4 border-t">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Icon name="Share2" size={18} className="text-primary" />
-                        Мои каналы
-                      </h4>
-                      <div className="space-y-2">
-                        <a 
-                          href="https://t.me/yourchannel" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors"
-                        >
-                          <Icon name="Send" size={16} />
-                          <span>Telegram-канал</span>
-                        </a>
-                        <a 
-                          href="https://instagram.com/yourprofile" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors"
-                        >
-                          <Icon name="Instagram" size={16} />
-                          <span>Instagram</span>
-                        </a>
+                  <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-none">
+                    <CardContent className="pt-6">
+                      <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <Icon name="Clock" className="text-primary" />
+                        График работы
+                      </h3>
+                      <div className="space-y-2 text-gray-700">
+                        <p>Понедельник - Пятница: 9:00 - 19:00</p>
+                        <p>Суббота: 10:00 - 16:00</p>
+                        <p>Воскресенье: выходной</p>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Записаться на приём</CardTitle>
-                    <CardDescription>Оставьте заявку, и я свяжусь с вами</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleAppointmentSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Ваше имя *</label>
-                        <Input
-                          placeholder="Как к вам обращаться?"
-                          value={appointmentForm.name}
-                          onChange={(e) => setAppointmentForm({...appointmentForm, name: e.target.value})}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Телефон *</label>
-                        <Input
-                          type="tel"
-                          placeholder="+7 (999) 123-45-67"
-                          value={appointmentForm.phone}
-                          onChange={(e) => setAppointmentForm({...appointmentForm, phone: e.target.value})}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Сообщение</label>
-                        <Textarea
-                          placeholder="Опишите кратко ситуацию и что вас беспокоит..."
-                          value={appointmentForm.message}
-                          onChange={(e) => setAppointmentForm({...appointmentForm, message: e.target.value})}
-                          rows={4}
-                        />
-                      </div>
-                      
-                      <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                        Отправить заявку
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
+                <div>
+                  <Card className="sticky top-24">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Icon name="Calendar" className="text-primary" />
+                        Записаться на консультацию
+                      </CardTitle>
+                      <CardDescription>
+                        Заполните форму, и я свяжусь с вами в ближайшее время для уточнения деталей
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleAppointmentSubmit} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Ваше имя</label>
+                          <Input 
+                            placeholder="Как к вам обращаться"
+                            value={appointmentForm.name}
+                            onChange={(e) => setAppointmentForm({ ...appointmentForm, name: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Телефон</label>
+                          <Input 
+                            type="tel"
+                            placeholder="+7 (999) 123-45-67"
+                            value={appointmentForm.phone}
+                            onChange={(e) => setAppointmentForm({ ...appointmentForm, phone: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Сообщение</label>
+                          <Textarea 
+                            placeholder="Расскажите о причине обращения и возрасте ребёнка"
+                            value={appointmentForm.message}
+                            onChange={(e) => setAppointmentForm({ ...appointmentForm, message: e.target.value })}
+                            rows={4}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" size="lg">
+                          Отправить заявку
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
+            </section>
           </TabsContent>
         </Tabs>
       </div>
 
-      <footer className="bg-gray-900 text-gray-300 py-12 mt-16">
+      <footer className="bg-gray-900 text-white py-12 mt-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Icon name="Brain" size={24} className="text-primary" />
-                </div>
-                <span className="font-bold text-white text-lg">Нейродефектолог</span>
-              </div>
-              <p className="text-sm text-gray-400">
-                Профессиональная помощь в развитии и коррекции особенностей детей
+              <h3 className="font-bold text-xl mb-4 flex items-center gap-2">
+                <Icon name="Brain" className="text-primary" />
+                {specialist?.full_name || 'Нейродефектолог'}
+              </h3>
+              <p className="text-gray-400">
+                {specialist?.title || 'Профессиональная помощь детям с особенностями развития'}
               </p>
             </div>
-
             <div>
-              <h4 className="font-semibold text-white mb-4">Навигация</h4>
-              <ul className="space-y-2 text-sm">
-                <li><button onClick={() => setActiveTab('home')} className="hover:text-primary transition-colors">Главная</button></li>
-                <li><button onClick={() => setActiveTab('services')} className="hover:text-primary transition-colors">Услуги</button></li>
-                <li><button onClick={() => setActiveTab('about')} className="hover:text-primary transition-colors">О специалисте</button></li>
-                <li><button onClick={() => setActiveTab('reviews')} className="hover:text-primary transition-colors">Отзывы</button></li>
-                <li><button onClick={() => setActiveTab('trips')} className="hover:text-primary transition-colors">Командировки</button></li>
-                <li><button onClick={() => setActiveTab('contact')} className="hover:text-primary transition-colors">Контакты</button></li>
-              </ul>
+              <h4 className="font-semibold mb-4">Навигация</h4>
+              <div className="space-y-2 text-gray-400">
+                <button onClick={() => setActiveTab('home')} className="block hover:text-white transition-colors">Главная</button>
+                <button onClick={() => setActiveTab('services')} className="block hover:text-white transition-colors">Услуги</button>
+                <button onClick={() => setActiveTab('about')} className="block hover:text-white transition-colors">О специалисте</button>
+                <button onClick={() => setActiveTab('articles')} className="block hover:text-white transition-colors">Статьи</button>
+                <button onClick={() => setActiveTab('reviews')} className="block hover:text-white transition-colors">Отзывы</button>
+                <button onClick={() => setActiveTab('trips')} className="block hover:text-white transition-colors">Командировки</button>
+                <button onClick={() => setActiveTab('contact')} className="block hover:text-white transition-colors">Контакты</button>
+              </div>
             </div>
-
             <div>
-              <h4 className="font-semibold text-white mb-4">Контакты</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <Icon name="Phone" size={16} />
-                  <a href="tel:+79999999999" className="hover:text-primary transition-colors">
-                    +7 (999) 999-99-99
+              <h4 className="font-semibold mb-4">Контакты</h4>
+              <div className="space-y-3 text-gray-400">
+                {specialist?.phone && (
+                  <a href={`tel:${specialist.phone}`} className="flex items-center gap-2 hover:text-white transition-colors">
+                    <Icon name="Phone" size={18} />
+                    {specialist.phone}
                   </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Icon name="Mail" size={16} />
-                  <a href="mailto:specialist@example.com" className="hover:text-primary transition-colors">
-                    specialist@example.com
-                  </a>
-                </li>
-              </ul>
-              <div className="flex gap-3 mt-4">
-                <a 
-                  href="https://t.me/yourchannel" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full bg-gray-800 hover:bg-primary transition-colors flex items-center justify-center"
-                >
-                  <Icon name="Send" size={16} />
-                </a>
-                <a 
-                  href="https://instagram.com/yourprofile" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full bg-gray-800 hover:bg-primary transition-colors flex items-center justify-center"
-                >
-                  <Icon name="Instagram" size={16} />
-                </a>
+                )}
+                {specialist?.location && (
+                  <p className="flex items-center gap-2">
+                    <Icon name="MapPin" size={18} />
+                    {specialist.location}
+                  </p>
+                )}
               </div>
             </div>
           </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-            © {new Date().getFullYear()} Все права защищены
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 {specialist?.full_name || 'Нейродефектолог'}. Все права защищены.</p>
           </div>
         </div>
       </footer>
