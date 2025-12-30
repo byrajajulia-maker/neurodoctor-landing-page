@@ -478,7 +478,16 @@ const Admin = () => {
               {articles.map((article, idx) => (
                 <Card key={article.id}>
                   <CardHeader>
-                    <CardTitle className="text-base">Статья #{idx + 1}</CardTitle>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-base">Статья #{idx + 1}</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setArticles(articles.filter(a => a.id !== article.id))}
+                      >
+                        <Icon name="Trash2" size={16} className="text-red-500" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -550,7 +559,16 @@ const Admin = () => {
               {testimonials.map((testimonial, idx) => (
                 <Card key={testimonial.id}>
                   <CardHeader>
-                    <CardTitle className="text-base">Отзыв #{idx + 1}</CardTitle>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-base">Отзыв #{idx + 1}</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setTestimonials(testimonials.filter(t => t.id !== testimonial.id))}
+                      >
+                        <Icon name="Trash2" size={16} className="text-red-500" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
@@ -625,7 +643,16 @@ const Admin = () => {
               {trips.map((trip, idx) => (
                 <Card key={trip.id}>
                   <CardHeader>
-                    <CardTitle className="text-base">Город #{idx + 1}</CardTitle>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-base">Город #{idx + 1}</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setTrips(trips.filter(t => t.id !== trip.id))}
+                      >
+                        <Icon name="Trash2" size={16} className="text-red-500" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>

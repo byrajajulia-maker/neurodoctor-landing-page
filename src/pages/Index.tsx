@@ -543,71 +543,83 @@ const Index = () => {
           <TabsContent value="trips" className="animate-fade-in">
             <section className="py-8">
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">Командировки в города</h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
-                  Я готова приехать в ваш город для проведения консультаций и занятий. 
-                  Оставьте заявку, и мы сообщим, когда планируется поездка в ваш регион.
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Интенсивы в вашем городе</h2>
+                <p className="text-gray-600 max-w-3xl mx-auto mb-4">
+                  Я рассматриваю возможность проведения <strong>3-недельного интенсива</strong> в вашем городе, если наберётся <strong>более 6 заявок</strong> из одного населённого пункта.
+                </p>
+                <p className="text-gray-500 max-w-2xl mx-auto text-sm">
+                  Оставьте свою заявку с контактами и названием города — я свяжусь с вами, когда будет достаточно участников для организации поездки.
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                {trips.map((trip) => (
-                  <Card key={trip.id} className={`border-t-4 ${trip.status === 'planned' ? 'border-t-primary' : trip.status === 'confirmed' ? 'border-t-green-500' : 'border-t-gray-300'}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between mb-2">
-                        <CardTitle className="text-xl flex items-center gap-2">
-                          <Icon name="MapPin" className="text-primary" />
-                          {trip.city}
-                        </CardTitle>
-                        <Badge 
-                          variant={trip.status === 'confirmed' ? 'default' : 'secondary'}
-                          className={trip.status === 'confirmed' ? 'bg-green-500' : ''}
-                        >
-                          {trip.status === 'confirmed' ? 'Подтверждено' : trip.status === 'planned' ? 'Планируется' : 'Сбор заявок'}
-                        </Badge>
-                      </div>
-                      {trip.trip_dates && (
-                        <CardDescription className="flex items-center gap-1">
-                          <Icon name="Calendar" size={14} />
-                          {trip.trip_dates}
-                        </CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-4">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-600">Заявок собрано:</span>
-                          <span className="font-bold text-primary">
-                            {trip.current_applications} / {trip.required_for_trip}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full transition-all"
-                            style={{ width: `${Math.min((trip.current_applications / trip.required_for_trip) * 100, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                      <Button 
-                        className="w-full" 
-                        variant={trip.status === 'confirmed' ? 'default' : 'outline'}
-                        onClick={() => setActiveTab('contact')}
-                      >
-                        {trip.status === 'confirmed' ? 'Записаться' : 'Оставить заявку'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <Card className="bg-white">
+              <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-none mb-8">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-center justify-center">
+                    <Icon name="TrendingUp" className="text-primary" />
+                    Количество заявок по городам
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {trips.filter(trip => trip.current_applications > 0).sort((a, b) => b.current_applications - a.current_applications).map((trip) => (
+                      <div key={trip.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Icon name="MapPin" size={20} className="text-primary" />
+                            <h3 className="font-bold text-lg">{trip.city}</h3>
+                          </div>
+                          {trip.status === 'planned' && (
+                            <Badge className="bg-green-500">
+                              <Icon name="Check" size={14} className="mr-1" />
+                              Набрано!
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="mb-3">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-gray-600">Заявок:</span>
+                            <span className="font-bold text-primary text-lg">
+                              {trip.current_applications} {trip.current_applications >= trip.required_for_trip ? '✓' : `/ ${trip.required_for_trip}`}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div 
+                              className={`h-2.5 rounded-full transition-all ${trip.current_applications >= trip.required_for_trip ? 'bg-green-500' : 'bg-primary'}`}
+                              style={{ width: `${Math.min((trip.current_applications / trip.required_for_trip) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        {trip.status === 'planned' && trip.trip_dates && (
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mb-2">
+                            <Icon name="Calendar" size={14} />
+                            Планируется: {trip.trip_dates}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          {trip.current_applications < trip.required_for_trip 
+                            ? `Ещё ${trip.required_for_trip - trip.current_applications} ${trip.required_for_trip - trip.current_applications === 1 ? 'заявка' : 'заявки'} до интенсива`
+                            : 'Идёт планирование дат интенсива'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {trips.filter(trip => trip.current_applications > 0).length === 0 && (
+                    <p className="text-center text-gray-500 py-8">
+                      Пока нет заявок. Станьте первым в вашем городе!
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-2 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
                     <Icon name="Send" className="text-primary" />
-                    Заявка на командировку
+                    Оставить заявку на интенсив
                   </CardTitle>
                   <CardDescription>
-                    Укажите ваш город и контактные данные. Мы свяжемся с вами, когда будем планировать поездку.
+                    Заполните форму ниже, чтобы я знала о вашем интересе к интенсиву в вашем городе. 
+                    При наборе 6+ заявок из одного города я организую 3-недельный выездной интенсив.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
