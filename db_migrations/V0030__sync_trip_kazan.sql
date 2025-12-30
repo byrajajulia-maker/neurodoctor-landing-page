@@ -1,0 +1,1 @@
+UPDATE business_trips SET city = 'Казань', current_applications = 2, required_for_trip = 8, status = 'planned' WHERE id = 1;
