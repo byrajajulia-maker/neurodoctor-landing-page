@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { SITE_DATA } from '@/data/siteData';
 
-const API_URL = 'https://functions.poehali.dev/dd1d02c6-ba51-49be-be8b-b6a59bb6b93c';
-const USE_STATIC_DATA = true; // Toggle to use static data instead of API
+const API_URL = 'https://functions.poehali.dev/96367e7c-5df4-4fea-b591-7451c0789b00';
+const USE_STATIC_DATA = false; // Use real database data
 
 // Fallback data if API is unavailable
 const FALLBACK_DATA: SiteData = {

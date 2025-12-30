@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { useSiteData } from '@/hooks/useSiteData';
+import { useAdminData } from '@/hooks/useAdminData';
 
 const Admin = () => {
   const { toast } = useToast();
-  const { data, loading } = useSiteData('all');
+  const { data, loading } = useAdminData();
   
   const [specialist, setSpecialist] = useState({
     full_name: '',
@@ -24,10 +24,17 @@ const Admin = () => {
     diplomas: [] as string[]
   });
 
+  const [settings, setSettings] = useState<Record<string, string>>({});
   const [services, setServices] = useState<any[]>([]);
   const [articles, setArticles] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [trips, setTrips] = useState<any[]>([]);
+  
+  // Отслеживание оригинальных ID для определения удалений
+  const [originalServiceIds, setOriginalServiceIds] = useState<number[]>([]);
+  const [originalArticleIds, setOriginalArticleIds] = useState<number[]>([]);
+  const [originalTestimonialIds, setOriginalTestimonialIds] = useState<number[]>([]);
+  const [originalTripIds, setOriginalTripIds] = useState<number[]>([]);
   
   useEffect(() => {
     if (data.specialist) {
@@ -36,15 +43,31 @@ const Admin = () => {
         diplomas: data.specialist.diplomas || []
       });
     }
-    if (data.services) setServices(data.services);
-    if (data.articles) setArticles(data.articles);
-    if (data.testimonials) setTestimonials(data.testimonials);
-    if (data.trips) setTrips(data.trips);
+    if (data.settings) {
+      setSettings(data.settings);
+    }
+    if (data.services) {
+      setServices(data.services);
+      setOriginalServiceIds(data.services.map((s: any) => s.id));
+    }
+    if (data.articles) {
+      setArticles(data.articles);
+      setOriginalArticleIds(data.articles.map((a: any) => a.id));
+    }
+    if (data.testimonials) {
+      setTestimonials(data.testimonials);
+      setOriginalTestimonialIds(data.testimonials.map((t: any) => t.id));
+    }
+    if (data.trips) {
+      setTrips(data.trips);
+      setOriginalTripIds(data.trips.map((tr: any) => tr.id));
+    }
   }, [data]);
 
   const generateSQL = () => {
     let sql = '';
     
+    // Обновление специалиста
     sql += `-- Обновление информации о специалисте\n`;
     sql += `UPDATE specialist_info SET\n`;
     sql += `  full_name = '${specialist.full_name.replace(/'/g, "''")}',\n`;
@@ -55,50 +78,113 @@ const Admin = () => {
     sql += `  telegram = '${specialist.telegram}',\n`;
     sql += `  instagram = '${specialist.instagram}',\n`;
     sql += `  photo_url = '${specialist.photo_url}',\n`;
-    sql += `  diplomas = ARRAY[${specialist.diplomas.map(d => `'${d.replace(/'/g, "''")}'`).join(', ')}]\n`;
+    const diplomasArray = specialist.diplomas.length > 0 
+      ? `ARRAY[${specialist.diplomas.map(d => `'${d.replace(/'/g, "''")}'`).join(', ')}]`
+      : `ARRAY[]::TEXT[]`;
+    sql += `  diplomas = ${diplomasArray}\n`;
     sql += `WHERE id = 1;\n\n`;
     
-    sql += `-- Обновление услуг\n`;
-    services.forEach(s => {
-      sql += `UPDATE services SET\n`;
-      sql += `  title = '${s.title.replace(/'/g, "''")}',\n`;
-      sql += `  price = ${s.price},\n`;
-      sql += `  duration = '${s.duration.replace(/'/g, "''")}',\n`;
-      sql += `  description = '${s.description.replace(/'/g, "''")}',\n`;
-      sql += `  category = '${s.category}',\n`;
-      sql += `  icon = '${s.icon}'\n`;
-      sql += `WHERE id = ${s.id};\n\n`;
+    // Обновление настроек сайта
+    sql += `-- Обновление настроек сайта\n`;
+    Object.entries(settings).forEach(([key, value]) => {
+      sql += `UPDATE site_settings SET value = '${value.replace(/'/g, "''")}' WHERE key = '${key}';\n`;
     });
+    sql += `\n`;
     
-    sql += `-- Обновление статей\n`;
-    articles.forEach(a => {
-      sql += `UPDATE articles SET\n`;
-      sql += `  title = '${a.title.replace(/'/g, "''")}',\n`;
-      sql += `  category = '${a.category.replace(/'/g, "''")}',\n`;
-      sql += `  excerpt = '${a.excerpt.replace(/'/g, "''")}',\n`;
-      sql += `  content = '${a.content.replace(/'/g, "''")}'\n`;
-      sql += `WHERE id = ${a.id};\n\n`;
-    });
+    // УДАЛЕНИЕ услуг
+    const currentServiceIds = services.map(s => s.id);
+    const deletedServiceIds = originalServiceIds.filter(id => !currentServiceIds.includes(id));
+    if (deletedServiceIds.length > 0) {
+      sql += `-- Удаление услуг\n`;
+      deletedServiceIds.forEach(id => {
+        sql += `DELETE FROM services WHERE id = ${id};\n`;
+      });
+      sql += `\n`;
+    }
     
-    sql += `-- Обновление отзывов\n`;
-    testimonials.forEach(t => {
-      sql += `UPDATE testimonials SET\n`;
-      sql += `  client_name = '${t.client_name.replace(/'/g, "''")}',\n`;
-      sql += `  city = '${(t.city || '').replace(/'/g, "''")}',\n`;
-      sql += `  text = '${t.text.replace(/'/g, "''")}',\n`;
-      sql += `  rating = ${t.rating}\n`;
-      sql += `WHERE id = ${t.id};\n\n`;
-    });
+    // Обновление услуг
+    if (services.length > 0) {
+      sql += `-- Обновление услуг\n`;
+      services.forEach(s => {
+        if (s.id > 0) {
+          sql += `UPDATE services SET title = '${s.title.replace(/'/g, "''")}', price = ${s.price}, duration = '${s.duration.replace(/'/g, "''")}', description = '${s.description.replace(/'/g, "''")}', category = '${s.category}', icon = '${s.icon}' WHERE id = ${s.id};\n`;
+        } else {
+          sql += `INSERT INTO services (title, price, duration, description, category, icon) VALUES ('${s.title.replace(/'/g, "''")}', ${s.price}, '${s.duration.replace(/'/g, "''")}', '${s.description.replace(/'/g, "''")}', '${s.category}', '${s.icon}');\n`;
+        }
+      });
+      sql += `\n`;
+    }
     
-    sql += `-- Обновление командировок\n`;
-    trips.forEach(tr => {
-      sql += `UPDATE business_trips SET\n`;
-      sql += `  city = '${tr.city.replace(/'/g, "''")}',\n`;
-      sql += `  current_applications = ${tr.current_applications},\n`;
-      sql += `  required_for_trip = ${tr.required_for_trip},\n`;
-      sql += `  status = '${tr.status}'\n`;
-      sql += `WHERE id = ${tr.id};\n\n`;
-    });
+    // УДАЛЕНИЕ статей
+    const currentArticleIds = articles.map(a => a.id);
+    const deletedArticleIds = originalArticleIds.filter(id => !currentArticleIds.includes(id));
+    if (deletedArticleIds.length > 0) {
+      sql += `-- Удаление статей\n`;
+      deletedArticleIds.forEach(id => {
+        sql += `DELETE FROM articles WHERE id = ${id};\n`;
+      });
+      sql += `\n`;
+    }
+    
+    // Обновление статей
+    if (articles.length > 0) {
+      sql += `-- Обновление статей\n`;
+      articles.forEach(a => {
+        if (a.id > 0) {
+          sql += `UPDATE articles SET title = '${a.title.replace(/'/g, "''")}', category = '${a.category.replace(/'/g, "''")}', excerpt = '${a.excerpt.replace(/'/g, "''")}', content = '${a.content.replace(/'/g, "''")}' WHERE id = ${a.id};\n`;
+        } else {
+          sql += `INSERT INTO articles (title, category, excerpt, content) VALUES ('${a.title.replace(/'/g, "''")}', '${a.category.replace(/'/g, "''")}', '${a.excerpt.replace(/'/g, "''")}', '${a.content.replace(/'/g, "''")}');\n`;
+        }
+      });
+      sql += `\n`;
+    }
+    
+    // УДАЛЕНИЕ отзывов
+    const currentTestimonialIds = testimonials.map(t => t.id);
+    const deletedTestimonialIds = originalTestimonialIds.filter(id => !currentTestimonialIds.includes(id));
+    if (deletedTestimonialIds.length > 0) {
+      sql += `-- Удаление отзывов\n`;
+      deletedTestimonialIds.forEach(id => {
+        sql += `DELETE FROM testimonials WHERE id = ${id};\n`;
+      });
+      sql += `\n`;
+    }
+    
+    // Обновление отзывов
+    if (testimonials.length > 0) {
+      sql += `-- Обновление отзывов\n`;
+      testimonials.forEach(t => {
+        if (t.id > 0) {
+          sql += `UPDATE testimonials SET client_name = '${t.client_name.replace(/'/g, "''")}', city = '${(t.city || '').replace(/'/g, "''")}', text = '${t.text.replace(/'/g, "''")}', rating = ${t.rating} WHERE id = ${t.id};\n`;
+        } else {
+          sql += `INSERT INTO testimonials (client_name, city, text, rating) VALUES ('${t.client_name.replace(/'/g, "''")}', '${(t.city || '').replace(/'/g, "''")}', '${t.text.replace(/'/g, "''")}', ${t.rating});\n`;
+        }
+      });
+      sql += `\n`;
+    }
+    
+    // УДАЛЕНИЕ командировок
+    const currentTripIds = trips.map(tr => tr.id);
+    const deletedTripIds = originalTripIds.filter(id => !currentTripIds.includes(id));
+    if (deletedTripIds.length > 0) {
+      sql += `-- Удаление командировок\n`;
+      deletedTripIds.forEach(id => {
+        sql += `DELETE FROM business_trips WHERE id = ${id};\n`;
+      });
+      sql += `\n`;
+    }
+    
+    // Обновление командировок
+    if (trips.length > 0) {
+      sql += `-- Обновление командировок\n`;
+      trips.forEach(tr => {
+        if (tr.id > 0) {
+          sql += `UPDATE business_trips SET city = '${tr.city.replace(/'/g, "''")}', current_applications = ${tr.current_applications}, required_for_trip = ${tr.required_for_trip}, status = '${tr.status}' WHERE id = ${tr.id};\n`;
+        } else {
+          sql += `INSERT INTO business_trips (city, current_applications, required_for_trip, status) VALUES ('${tr.city.replace(/'/g, "''")}', ${tr.current_applications}, ${tr.required_for_trip}, '${tr.status}');\n`;
+        }
+      });
+    }
     
     return sql;
   };
@@ -231,6 +317,76 @@ const Admin = () => {
         </Card>
 
         <div className="space-y-8">
+          {/* РАЗДЕЛ: Настройки сайта (график, важная информация и т.д.) */}
+          <Card className="shadow-lg border-amber-100">
+            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50">
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="Settings2" className="text-amber-600" />
+                ⚙️ Настройки сайта
+              </CardTitle>
+              <CardDescription>
+                График работы, важная информация, полезные материалы
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              {/* График работы */}
+              <div>
+                <Label>График работы</Label>
+                <Textarea
+                  value={settings.work_schedule || ''}
+                  onChange={(e) => setSettings({ ...settings, work_schedule: e.target.value })}
+                  placeholder="Пн-Пт: 9:00 - 18:00..."
+                  rows={4}
+                />
+                <p className="text-sm text-gray-500 mt-1">→ Отображается в контактной информации</p>
+              </div>
+
+              {/* Важная информация - заголовок */}
+              <div>
+                <Label>Заголовок блока "Важная информация"</Label>
+                <Input
+                  value={settings.important_info_title || ''}
+                  onChange={(e) => setSettings({ ...settings, important_info_title: e.target.value })}
+                  placeholder="Важная информация"
+                />
+              </div>
+
+              {/* Важная информация - текст */}
+              <div>
+                <Label>Текст блока "Важная информация"</Label>
+                <Textarea
+                  value={settings.important_info_text || ''}
+                  onChange={(e) => setSettings({ ...settings, important_info_text: e.target.value })}
+                  placeholder="• Пункт 1&#10;• Пункт 2..."
+                  rows={6}
+                />
+                <p className="text-sm text-gray-500 mt-1">→ Используйте • для списков</p>
+              </div>
+
+              {/* Полезные материалы - заголовок */}
+              <div>
+                <Label>Заголовок раздела "Полезные материалы"</Label>
+                <Input
+                  value={settings.useful_materials_title || ''}
+                  onChange={(e) => setSettings({ ...settings, useful_materials_title: e.target.value })}
+                  placeholder="Полезные материалы"
+                />
+              </div>
+
+              {/* Полезные материалы - текст */}
+              <div>
+                <Label>Описание раздела "Полезные материалы"</Label>
+                <Textarea
+                  value={settings.useful_materials_text || ''}
+                  onChange={(e) => setSettings({ ...settings, useful_materials_text: e.target.value })}
+                  placeholder="Здесь вы найдёте..."
+                  rows={4}
+                />
+                <p className="text-sm text-gray-500 mt-1">→ Вводный текст перед списком материалов</p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* РАЗДЕЛ: О специалисте */}
           <Card className="shadow-lg border-purple-100">
             <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">

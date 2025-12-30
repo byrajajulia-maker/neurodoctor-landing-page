@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "Get all site data",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "specialist": "object",
+        "settings": "object",
+        "services": "array",
+        "testimonials": "array",
+        "articles": "array",
+        "trips": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
