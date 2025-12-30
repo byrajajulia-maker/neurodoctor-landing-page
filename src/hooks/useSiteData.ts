@@ -1,6 +1,32 @@
 import { useState, useEffect } from 'react';
+import { SITE_DATA } from '@/data/siteData';
 
 const API_URL = 'https://functions.poehali.dev/dd1d02c6-ba51-49be-be8b-b6a59bb6b93c';
+const USE_STATIC_DATA = true; // Toggle to use static data instead of API
+
+// Fallback data if API is unavailable
+const FALLBACK_DATA: SiteData = {
+  specialist: {
+    id: 1,
+    full_name: 'Бурая Ольга Вилленовна',
+    title: 'Нейродефектолог, брифабилитолог, фасциолог, логопед-реабилитолог.',
+    bio: 'Специалист с многолетним опытом работы с детьми с особенностями развития. Использую современные методики и индивидуальный подход к каждому ребёнку.',
+    location: 'Москва',
+    phone: '+7 (999) 123-45-67',
+    whatsapp: '+79991234567',
+    telegram: 'https://t.me/username',
+    instagram: 'https://instagram.com/username',
+    photo_url: 'https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg',
+    specializations: ['Нейродефектология', 'Логопедия'],
+    experience_years: 10,
+    clients_count: 200,
+    success_rate: 95
+  },
+  services: [],
+  testimonials: [],
+  articles: [],
+  trips: []
+};
 
 interface Specialist {
   id: number;
@@ -76,20 +102,48 @@ export const useSiteData = (endpoint: string = 'all') => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (USE_STATIC_DATA) {
+        // Use static data from file
+        setLoading(true);
+        await new Promise(resolve => setTimeout(resolve, 100)); // Simulate loading
+        setData(SITE_DATA);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API (legacy)
       try {
         setLoading(true);
-        const response = await fetch(`${API_URL}?endpoint=${endpoint}`);
+        console.log('Fetching from:', `${API_URL}?endpoint=${endpoint}`);
+        
+        const response = await fetch(`${API_URL}?endpoint=${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors',
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
         
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('Response error:', errorText);
+          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
         }
         
         const result = await response.json();
+        console.log('Fetched data:', result);
         setData(result);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
-        console.error('Error fetching site data:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
+        setError(errorMessage);
+        console.error('Fetch error:', errorMessage, 'for', `${API_URL}?endpoint=${endpoint}`);
+        console.warn('Using fallback data due to API error');
+        setData(FALLBACK_DATA);
       } finally {
         setLoading(false);
       }
