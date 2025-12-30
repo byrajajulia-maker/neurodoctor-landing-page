@@ -164,11 +164,11 @@ const Index = () => {
                       )}
                     </div>
                   </div>
-                  <div className="animate-scale-in px-6">
+                  <div className="animate-scale-in px-6 flex justify-center">
                     <img 
                       src={specialist?.photo_url || "https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"}
                       alt={specialist?.full_name || "Нейродефектолог"} 
-                      className="rounded-2xl shadow-2xl w-full h-[500px] object-cover"
+                      className="rounded-3xl shadow-2xl w-[400px] h-[400px] object-cover"
                     />
                   </div>
                 </div>
@@ -295,11 +295,13 @@ const Index = () => {
               <div className="grid md:grid-cols-2 gap-12 items-start">
                 <div>
                   <h2 className="text-3xl font-bold text-gray-900 mb-6">О специалисте</h2>
-                  <img 
-                    src={specialist?.photo_url || "https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"}
-                    alt={specialist?.full_name || "Специалист"} 
-                    className="rounded-2xl shadow-xl w-full object-cover mb-6"
-                  />
+                  <div className="flex justify-center mb-6">
+                    <img 
+                      src={specialist?.photo_url || "https://cdn.poehali.dev/projects/a166d6d7-2fe8-428d-8ea8-cfa2f49ef647/files/dc1855c0-ee5a-4d26-ba95-ae790a50eab5.jpg"}
+                      alt={specialist?.full_name || "Специалист"} 
+                      className="rounded-3xl shadow-xl w-[350px] h-[350px] object-cover"
+                    />
+                  </div>
                   
                   <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-none">
                     <CardContent className="pt-6">
