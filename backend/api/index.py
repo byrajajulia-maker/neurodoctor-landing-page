@@ -104,7 +104,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cur.execute('''
                 SELECT id, city, current_applications, required_for_trip, status, trip_dates 
                 FROM business_trips 
-                WHERE status IN (''active'', ''planned'')
+                WHERE status IN ('active', 'planned')
                 ORDER BY current_applications DESC, city ASC
             ''')
             trips = [dict(row) for row in cur.fetchall()]

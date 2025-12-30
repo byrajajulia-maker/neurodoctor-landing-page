@@ -707,7 +707,7 @@ const Admin = () => {
           </CardHeader>
           <CardContent>
             <pre className="text-xs overflow-x-auto max-h-96 whitespace-pre-wrap">
-              {generateSQL()}
+              {sqlQuery || 'SQL будет сгенерирован при копировании'}
             </pre>
           </CardContent>
         </Card>
