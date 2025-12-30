@@ -75,6 +75,17 @@ const Index = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild className="hidden md:flex">
+              <a href="/admin">
+                <Icon name="Settings" size={18} className="mr-2" />
+                Панель управления
+              </a>
+            </Button>
+            <Button variant="ghost" size="icon" asChild className="md:hidden">
+              <a href="/admin">
+                <Icon name="Settings" size={20} />
+              </a>
+            </Button>
             {specialist?.telegram && (
               <Button variant="ghost" size="icon" asChild>
                 <a href={specialist.telegram} target="_blank" rel="noopener noreferrer">
