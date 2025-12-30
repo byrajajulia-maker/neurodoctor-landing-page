@@ -54,7 +54,8 @@ const Admin = () => {
     sql += `  whatsapp = '${specialist.whatsapp}',\n`;
     sql += `  telegram = '${specialist.telegram}',\n`;
     sql += `  instagram = '${specialist.instagram}',\n`;
-    sql += `  photo_url = '${specialist.photo_url}'\n`;
+    sql += `  photo_url = '${specialist.photo_url}',\n`;
+    sql += `  diplomas = ARRAY[${specialist.diplomas.map(d => `'${d.replace(/'/g, "''")}'`).join(', ')}]\n`;
     sql += `WHERE id = 1;\n\n`;
     
     sql += `-- Обновление услуг\n`;
@@ -102,13 +103,48 @@ const Admin = () => {
     return sql;
   };
 
-  const handleCopySQL = () => {
+  const handleCopySQL = async () => {
     const sql = generateSQL();
-    navigator.clipboard.writeText(sql);
-    toast({
-      title: "SQL скопирован!",
-      description: "Теперь отправьте его мне в чат: 'выполни этот sql'",
-    });
+    
+    try {
+      await navigator.clipboard.writeText(sql);
+      toast({
+        title: "✅ SQL скопирован!",
+        description: "Теперь отправьте его мне в чат: 'выполни этот sql'",
+      });
+      
+      // Также выводим в консоль для отладки
+      console.log('SQL скопирован в буфер обмена:', sql.substring(0, 200) + '...');
+    } catch (err) {
+      console.error('Ошибка копирования:', err);
+      
+      // Fallback: показываем SQL в alert для ручного копирования
+      const textarea = document.createElement('textarea');
+      textarea.value = sql;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        document.execCommand('copy');
+        toast({
+          title: "✅ SQL скопирован!",
+          description: "Использован резервный метод копирования",
+        });
+      } catch (fallbackErr) {
+        toast({
+          title: "❌ Не удалось скопировать",
+          description: "Попробуйте скопировать вручную из консоли (F12)",
+          variant: "destructive"
+        });
+        console.log('=== SQL ДЛЯ КОПИРОВАНИЯ ===');
+        console.log(sql);
+        console.log('=== КОНЕЦ SQL ===');
+      }
+      
+      document.body.removeChild(textarea);
+    }
   };
 
   const addDiploma = () => {
